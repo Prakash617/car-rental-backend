@@ -2,6 +2,7 @@ from .base import *
 
 DEBUG = False
 TESTING = True
+ALLOWED_HOSTS = ["*"]
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",

@@ -1,9 +1,17 @@
 import pytest
+from django.db import connection
 from rest_framework.test import APIClient
 
 from apps.platform.domains.models import Domain
 from apps.platform.platform_users.models import PlatformUser
 from apps.platform.tenants.models import Tenant
+
+
+@pytest.fixture(autouse=True)
+def reset_schema_to_public(db):
+    connection.set_schema_to_public()
+    yield
+    connection.set_schema_to_public()
 
 
 @pytest.fixture

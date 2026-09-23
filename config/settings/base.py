@@ -88,6 +88,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.middleware.tenant_context.TenantContextMiddleware",
+    "common.middleware.tenant_membership.TenantMembershipMiddleware",
 ]
 
 # ==============================================================================
