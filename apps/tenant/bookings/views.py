@@ -1,7 +1,8 @@
-from drf_spectacular.utils import extend_schema
-from rest_framework import status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.tenant.pricing.services.calculator import PricingCalculatorService
@@ -9,7 +10,7 @@ from apps.tenant.vehicles.models import Vehicle
 from common.permissions.tenant import IsTenantStaffOrAbove
 from common.responses.standard import StandardResponseMixin
 
-from .models import Booking
+from .models import Booking, BookingStatus
 from .serializers import (
     BookingSerializer,
     CreateBookingSerializer,
@@ -18,7 +19,7 @@ from .serializers import (
 from .services.reservation import ReservationService
 
 
-class QuoteView(APIView):
+class QuoteView(StandardResponseMixin, APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=QuoteRequestSerializer)
@@ -30,9 +31,9 @@ class QuoteView(APIView):
         try:
             vehicle = Vehicle.objects.get(id=data["vehicle_id"])
         except Vehicle.DoesNotExist:
-            return Response(
-                {"success": False, "error": {"code": "NOT_FOUND", "message": "Vehicle not found."}},
-                status=status.HTTP_404_NOT_FOUND,
+            return self.error_response(
+                message="Vehicle not found.",
+                status_code=status.HTTP_404_NOT_FOUND,
             )
 
         quote = PricingCalculatorService.calculate_quote(
@@ -42,19 +43,41 @@ class QuoteView(APIView):
             addon_ids=data.get("addon_ids"),
             coupon_code=data.get("coupon_code"),
         )
-        return Response({"success": True, "data": quote})
+        return self.success_response(data=quote)
 
 
 class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     """
-    Booking creation (open for public checkout) and management (staff only).
+    Booking creation (open for public checkout) and lifecycle management (staff).
+    Includes public lookup and cancellation.
     """
 
-    queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = [
+        "status",
+        "payment_status",
+        "vehicle",
+        "pickup_branch",
+        "return_branch",
+    ]
+    search_fields = [
+        "booking_reference",
+        "customer__first_name",
+        "customer__last_name",
+        "customer__email",
+        "vehicle__license_plate",
+    ]
+    ordering_fields = ["created_at", "pickup_datetime", "total_price"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Booking.objects.select_related(
+            "vehicle", "customer", "pickup_branch", "return_branch"
+        ).prefetch_related("addons", "addons__addon")
 
     def get_permissions(self):
-        if self.action == "create":
+        if self.action in ["create", "lookup", "cancel"]:
             return [AllowAny()]
         return [IsTenantStaffOrAbove()]
 
@@ -76,11 +99,66 @@ class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             notes=data.get("notes"),
         )
 
-        return Response(
-            {
-                "success": True,
-                "data": BookingSerializer(booking).data,
-                "message": "Vehicle reservation initiated successfully.",
-            },
-            status=status.HTTP_201_CREATED,
+        return self.success_response(
+            data=BookingSerializer(booking).data,
+            message="Vehicle reservation initiated successfully.",
+            status_code=status.HTTP_201_CREATED,
+        )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="email",
+                description="Customer email address for verification",
+                required=False,
+                type=str,
+            )
+        ],
+        responses={200: BookingSerializer},
+    )
+    @action(detail=False, methods=["get"], url_path=r"lookup/(?P<reference>[^/.]+)")
+    def lookup(self, request, reference=None):
+        """
+        Public lookup of reservation status using booking reference and email verification.
+        """
+        email = request.query_params.get("email")
+        query = Booking.objects.select_related(
+            "vehicle", "customer", "pickup_branch", "return_branch"
+        ).filter(booking_reference__iexact=reference)
+
+        if email:
+            query = query.filter(customer__email__iexact=email.strip())
+
+        booking = query.first()
+        if not booking:
+            return self.error_response(
+                message="No booking found with this reference number and email.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        return self.success_response(data=BookingSerializer(booking).data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        """
+        Cancels a pending or confirmed booking.
+        """
+        booking = self.get_object()
+        if booking.status not in [BookingStatus.PENDING, BookingStatus.CONFIRMED]:
+            return self.error_response(
+                message=f"Cannot cancel booking with current status '{booking.status}'.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking.status = BookingStatus.CANCELLED
+        booking.save(update_fields=["status"])
+
+        # Release vehicle status back to available if it was reserved
+        if booking.vehicle.status == "reserved":
+            booking.vehicle.status = "available"
+            booking.vehicle.save(update_fields=["status"])
+
+        return self.success_response(
+            data=BookingSerializer(booking).data,
+            message="Booking cancelled successfully.",
         )

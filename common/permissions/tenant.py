@@ -57,6 +57,9 @@ class HasTenantRole(BasePermission):
         if allowed_roles is not None:
             self.allowed_roles = allowed_roles
 
+    def __call__(self):
+        return self
+
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False

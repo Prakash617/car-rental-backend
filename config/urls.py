@@ -7,13 +7,25 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from apps.platform.platform_users.views import CurrentUserView, LoginView
 from apps.tenant.bookings.views import BookingViewSet, QuoteView
 from apps.tenant.branches.views import BranchViewSet
+from apps.tenant.customers.views import CustomerViewSet
 from apps.tenant.memberships.views import AcceptInviteView, InviteMemberView, TeamMemberListView
+from apps.tenant.pricing.views import (
+    CouponViewSet,
+    ExtraAddonViewSet,
+    SeasonalRateViewSet,
+)
+from apps.tenant.reports.views import DashboardOverviewView
 from apps.tenant.vehicles.views import VehicleViewSet
+from apps.tenant.websites.views import ManageWebsiteConfigView, PublicWebsiteConfigView
 
 router = DefaultRouter()
 router.register(r"branches", BranchViewSet, basename="branch")
 router.register(r"vehicles", VehicleViewSet, basename="vehicle")
 router.register(r"bookings", BookingViewSet, basename="booking")
+router.register(r"customers", CustomerViewSet, basename="customer")
+router.register(r"pricing/seasonal-rates", SeasonalRateViewSet, basename="seasonal-rate")
+router.register(r"pricing/coupons", CouponViewSet, basename="coupon")
+router.register(r"pricing/addons", ExtraAddonViewSet, basename="addon")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -33,6 +45,11 @@ urlpatterns = [
     path("api/v1/team/", TeamMemberListView.as_view(), name="team_list"),
     path("api/v1/team/invite/", InviteMemberView.as_view(), name="team_invite"),
     path("api/v1/team/accept-invite/", AcceptInviteView.as_view(), name="team_accept_invite"),
+    # Website & Themes
+    path("api/v1/website/config/", PublicWebsiteConfigView.as_view(), name="website_config_public"),
+    path("api/v1/dashboard/theme/", ManageWebsiteConfigView.as_view(), name="dashboard_theme"),
+    # Dashboard Analytics
+    path("api/v1/dashboard/overview/", DashboardOverviewView.as_view(), name="dashboard_overview"),
     # Pricing Quote
     path("api/v1/pricing/quote/", QuoteView.as_view(), name="pricing_quote"),
     # Payments
@@ -41,6 +58,6 @@ urlpatterns = [
     path("api/v1/notifications/", include("apps.tenant.notifications.urls")),
     # Fleet Maintenance & Telemetry
     path("api/v1/maintenance/", include("apps.tenant.maintenance.urls")),
-    # Core Rental API
+    # Core Rental API & CRUD ViewSets
     path("api/v1/", include(router.urls)),
 ]

@@ -2,13 +2,13 @@ import logging
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.tenant.bookings.models import Booking
-from apps.tenant.memberships.models import RoleChoices
 from apps.tenant.payments.models import Payment
 from apps.tenant.payments.serializers import (
     CreateCheckoutSessionSerializer,
@@ -20,7 +20,11 @@ from apps.tenant.payments.services.payment_service import (
     InvalidWebhookSignatureError,
     PaymentService,
 )
-from common.permissions.tenant import HasTenantRole, IsTenantMember
+from common.permissions.tenant import (
+    IsTenantManagerOrAbove,
+    IsTenantMember,
+    IsTenantStaffOrAbove,
+)
 from common.responses.standard import StandardResponseMixin
 
 logger = logging.getLogger(__name__)
@@ -34,6 +38,7 @@ class CheckoutSessionView(StandardResponseMixin, APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(request=CreateCheckoutSessionSerializer)
     def post(self, request, *args, **kwargs):
         serializer = CreateCheckoutSessionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -160,13 +165,7 @@ class PaymentViewSet(StandardResponseMixin, viewsets.ReadOnlyModelViewSet):
         methods=["post"],
         permission_classes=[
             permissions.IsAuthenticated,
-            HasTenantRole(
-                [
-                    RoleChoices.OWNER,
-                    RoleChoices.ADMIN,
-                    RoleChoices.MANAGER,
-                ]
-            ),
+            IsTenantManagerOrAbove,
         ],
     )
     def refund(self, request, pk=None):
@@ -199,16 +198,10 @@ class ManualPaymentView(StandardResponseMixin, APIView):
 
     permission_classes = [
         permissions.IsAuthenticated,
-        HasTenantRole(
-            [
-                RoleChoices.OWNER,
-                RoleChoices.ADMIN,
-                RoleChoices.MANAGER,
-                RoleChoices.STAFF,
-            ]
-        ),
+        IsTenantStaffOrAbove,
     ]
 
+    @extend_schema(request=ManualPaymentSerializer)
     def post(self, request, *args, **kwargs):
         serializer = ManualPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

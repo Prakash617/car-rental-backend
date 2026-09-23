@@ -1,7 +1,8 @@
 from datetime import date
 
 from django.db.models import Sum
-from rest_framework import permissions, status, viewsets
+from drf_spectacular.utils import extend_schema
+from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 
@@ -22,9 +23,8 @@ from apps.tenant.maintenance.serializers import (
     VehicleInspectionSerializer,
 )
 from apps.tenant.maintenance.services.maintenance_service import MaintenanceService
-from apps.tenant.memberships.models import RoleChoices
 from apps.tenant.vehicles.models import Vehicle, VehicleStatus
-from common.permissions.tenant import HasTenantRole, IsTenantMember
+from common.permissions.tenant import IsTenantMember, IsTenantStaffOrAbove
 from common.responses.standard import StandardResponseMixin
 
 
@@ -54,14 +54,7 @@ class MaintenanceViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         methods=["post"],
         permission_classes=[
             permissions.IsAuthenticated,
-            HasTenantRole(
-                [
-                    RoleChoices.OWNER,
-                    RoleChoices.ADMIN,
-                    RoleChoices.MANAGER,
-                    RoleChoices.STAFF,
-                ]
-            ),
+            IsTenantStaffOrAbove,
         ],
     )
     def start(self, request, pk=None):
@@ -79,14 +72,7 @@ class MaintenanceViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         methods=["post"],
         permission_classes=[
             permissions.IsAuthenticated,
-            HasTenantRole(
-                [
-                    RoleChoices.OWNER,
-                    RoleChoices.ADMIN,
-                    RoleChoices.MANAGER,
-                    RoleChoices.STAFF,
-                ]
-            ),
+            IsTenantStaffOrAbove,
         ],
     )
     def complete(self, request, pk=None):
@@ -197,6 +183,15 @@ class ServiceIntervalViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         return ServiceInterval.objects.select_related("vehicle")
 
 
+class FleetHealthOverviewSerializer(serializers.Serializer):
+    fleet_size = serializers.IntegerField()
+    available = serializers.IntegerField()
+    rented = serializers.IntegerField()
+    in_maintenance = serializers.IntegerField()
+    active_maintenance_jobs = serializers.IntegerField()
+    monthly_maintenance_cost = serializers.CharField()
+
+
 class FleetHealthOverviewView(StandardResponseMixin, APIView):
     """
     Fleet health summary endpoint for manager dashboards.
@@ -204,6 +199,7 @@ class FleetHealthOverviewView(StandardResponseMixin, APIView):
 
     permission_classes = [permissions.IsAuthenticated, IsTenantMember]
 
+    @extend_schema(responses={200: FleetHealthOverviewSerializer})
     def get(self, request, *args, **kwargs):
         total_vehicles = Vehicle.objects.count()
         available_vehicles = Vehicle.objects.filter(status=VehicleStatus.AVAILABLE).count()
