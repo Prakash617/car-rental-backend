@@ -39,6 +39,8 @@ urlpatterns = [
     path("api/v1/payments/", include("apps.tenant.payments.urls")),
     # Notifications
     path("api/v1/notifications/", include("apps.tenant.notifications.urls")),
+    # Fleet Maintenance & Telemetry
+    path("api/v1/maintenance/", include("apps.tenant.maintenance.urls")),
     # Core Rental API
     path("api/v1/", include(router.urls)),
 ]
