@@ -1,10 +1,19 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.platform.platform_users.views import CurrentUserView, LoginView
+from apps.tenant.bookings.views import BookingViewSet, QuoteView
+from apps.tenant.branches.views import BranchViewSet
 from apps.tenant.memberships.views import AcceptInviteView, InviteMemberView, TeamMemberListView
+from apps.tenant.vehicles.views import VehicleViewSet
+
+router = DefaultRouter()
+router.register(r"branches", BranchViewSet, basename="branch")
+router.register(r"vehicles", VehicleViewSet, basename="vehicle")
+router.register(r"bookings", BookingViewSet, basename="booking")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -24,4 +33,8 @@ urlpatterns = [
     path("api/v1/team/", TeamMemberListView.as_view(), name="team_list"),
     path("api/v1/team/invite/", InviteMemberView.as_view(), name="team_invite"),
     path("api/v1/team/accept-invite/", AcceptInviteView.as_view(), name="team_accept_invite"),
+    # Pricing Quote
+    path("api/v1/pricing/quote/", QuoteView.as_view(), name="pricing_quote"),
+    # Core Rental API
+    path("api/v1/", include(router.urls)),
 ]

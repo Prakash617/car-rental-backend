@@ -11,11 +11,18 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     if response is not None:
-        error_code = getattr(exc, "default_code", "API_ERROR")
-        if isinstance(error_code, str):
-            error_code = error_code.upper()
+        if response.status_code == 404:
+            error_code = "NOT_FOUND"
+        elif response.status_code == 403:
+            error_code = "PERMISSION_DENIED"
+        elif response.status_code == 401:
+            error_code = "UNAUTHENTICATED"
         else:
-            error_code = "API_ERROR"
+            error_code = getattr(exc, "default_code", "API_ERROR")
+            if isinstance(error_code, str):
+                error_code = error_code.upper()
+            else:
+                error_code = "API_ERROR"
 
         response.data = {
             "success": False,
