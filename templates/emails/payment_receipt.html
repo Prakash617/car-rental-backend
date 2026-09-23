@@ -1,0 +1,44 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<h2 style="color: #ffffff; font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 8px;">
+  Payment Receipt & Tax Invoice
+</h2>
+<p style="color: #94a3b8; font-size: 15px; margin-top: 0; margin-bottom: 24px;">
+  Thank you for your payment. Here is your official payment receipt.
+</p>
+
+<div class="card">
+  <div style="font-size: 16px; font-weight: 700; color: #f8fafc; margin-bottom: 12px; border-bottom: 1px solid #374151; padding-bottom: 8px;">
+    Payment Information
+  </div>
+  <div class="row">
+    <span class="label">Receipt ID:</span>
+    <span class="value" style="font-family: monospace;">{{ payment_id }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Booking Reference:</span>
+    <span class="value" style="color: #38bdf8; font-family: monospace;">{{ booking_reference }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Payment Method:</span>
+    <span class="value" style="text-transform: capitalize;">{{ provider }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Transaction Reference:</span>
+    <span class="value" style="font-family: monospace;">{{ transaction_reference }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Date & Time:</span>
+    <span class="value">{{ payment_date }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Status:</span>
+    <span class="value" style="color: #34d399; text-transform: uppercase;">{{ status }}</span>
+  </div>
+  <div class="row" style="margin-top: 8px; border-top: 2px solid #4b5563; padding-top: 10px;">
+    <span class="label" style="font-size: 15px; font-weight: 700; color: #f8fafc;">Total Paid:</span>
+    <span class="value" style="font-size: 16px; font-weight: 700; color: #34d399;">{{ currency }} {{ amount }}</span>
+  </div>
+</div>
+{% endblock %}

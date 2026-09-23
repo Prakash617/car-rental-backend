@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject|default:"Car Rental Notification" }}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f19;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+    .email-header {
+      padding: 32px 40px 24px;
+      background: linear-gradient(180deg, #1e293b 0%, #111827 100%);
+      border-bottom: 1px solid #1f2937;
+      text-align: center;
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #f8fafc;
+      margin: 0;
+    }
+    .brand-accent {
+      color: #e11d48;
+    }
+    .email-body {
+      padding: 36px 40px;
+    }
+    .email-footer {
+      padding: 24px 40px;
+      background-color: #0b0f19;
+      border-top: 1px solid #1f2937;
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      background-color: #e11d48;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      margin: 20px 0;
+    }
+    .card {
+      background-color: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #2d3748;
+    }
+    .row:last-child {
+      border-bottom: none;
+    }
+    .label {
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .value {
+      color: #f1f5f9;
+      font-weight: 600;
+      font-size: 13px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <h1 class="brand-title">
+        {{ company_name|default:"LUXURY" }} <span class="brand-accent">RENTALS</span>
+      </h1>
+    </div>
+    <div class="email-body">
+      {% block content %}{% endblock %}
+    </div>
+    <div class="email-footer">
+      <p style="margin: 0 0 8px;">
+        © {{ current_year|default:"2026" }} {{ company_name|default:"Car Rental SaaS" }}. All rights reserved.
+      </p>
+      <p style="margin: 0;">
+        Need support? Contact us at <a href="mailto:{{ support_email|default:'support@platform.com' }}" style="color: #94a3b8;">{{ support_email|default:'support@platform.com' }}</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

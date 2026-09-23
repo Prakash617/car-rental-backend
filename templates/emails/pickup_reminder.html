@@ -1,0 +1,41 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<h2 style="color: #38bdf8; font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 8px;">
+  Upcoming Vehicle Pickup Reminder
+</h2>
+<p style="color: #94a3b8; font-size: 15px; margin-top: 0; margin-bottom: 24px;">
+  Dear {{ customer_name }}, your rental pickup is scheduled soon.
+</p>
+
+<div class="card">
+  <div style="font-size: 16px; font-weight: 700; color: #f8fafc; margin-bottom: 12px; border-bottom: 1px solid #374151; padding-bottom: 8px;">
+    Pickup Instructions
+  </div>
+  <div class="row">
+    <span class="label">Booking Reference:</span>
+    <span class="value" style="color: #38bdf8; font-family: monospace;">{{ booking_reference }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Vehicle:</span>
+    <span class="value">{{ vehicle_name }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Pickup Location:</span>
+    <span class="value">{{ pickup_branch_address }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Pickup Date & Time:</span>
+    <span class="value">{{ pickup_datetime }}</span>
+  </div>
+</div>
+
+<div style="background-color: #1e293b; border-left: 4px solid #38bdf8; padding: 16px; margin: 20px 0; border-radius: 4px;">
+  <strong style="color: #f8fafc; display: block; margin-bottom: 6px;">Checklist for Pickup:</strong>
+  <ul style="color: #94a3b8; margin: 0; padding-left: 20px; font-size: 13px;">
+    <li>Valid original Driver's License</li>
+    <li>Credit or debit card for the security deposit</li>
+    <li>Passport or National ID for identity verification</li>
+  </ul>
+</div>
+{% endblock %}

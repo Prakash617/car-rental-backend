@@ -35,6 +35,10 @@ urlpatterns = [
     path("api/v1/team/accept-invite/", AcceptInviteView.as_view(), name="team_accept_invite"),
     # Pricing Quote
     path("api/v1/pricing/quote/", QuoteView.as_view(), name="pricing_quote"),
+    # Payments
+    path("api/v1/payments/", include("apps.tenant.payments.urls")),
+    # Notifications
+    path("api/v1/notifications/", include("apps.tenant.notifications.urls")),
     # Core Rental API
     path("api/v1/", include(router.urls)),
 ]

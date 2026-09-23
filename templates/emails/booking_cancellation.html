@@ -1,0 +1,38 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<h2 style="color: #ef4444; font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 8px;">
+  Booking Cancellation Notice
+</h2>
+<p style="color: #94a3b8; font-size: 15px; margin-top: 0; margin-bottom: 24px;">
+  Dear {{ customer_name }}, your vehicle reservation #{{ booking_reference }} has been cancelled.
+</p>
+
+<div class="card">
+  <div style="font-size: 16px; font-weight: 700; color: #f8fafc; margin-bottom: 12px; border-bottom: 1px solid #374151; padding-bottom: 8px;">
+    Cancellation Details
+  </div>
+  <div class="row">
+    <span class="label">Booking Reference:</span>
+    <span class="value" style="font-family: monospace;">{{ booking_reference }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Vehicle:</span>
+    <span class="value">{{ vehicle_name }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Reason:</span>
+    <span class="value">{{ cancellation_reason|default:"Requested by customer or branch policy" }}</span>
+  </div>
+  {% if refund_amount %}
+  <div class="row">
+    <span class="label">Refund Issued:</span>
+    <span class="value" style="color: #34d399;">{{ currency }} {{ refund_amount }}</span>
+  </div>
+  {% endif %}
+</div>
+
+<p style="color: #cbd5e1; font-size: 14px; margin: 24px 0;">
+  If you believe this cancellation was made in error or have any questions about refunds, please reach out to our support team immediately.
+</p>
+{% endblock %}

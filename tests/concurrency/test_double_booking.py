@@ -92,22 +92,27 @@ class TestDoubleBookingConcurrency:
         results = []
 
         def attempt_booking(customer_data, thread_id):
-            with schema_context(tenant_a.schema_name):
-                try:
-                    booking = ReservationService.create_reservation(
-                        vehicle_id=target_vehicle.id,
-                        customer_data=customer_data,
-                        pickup_branch_id=concurrency_branch.id,
-                        return_branch_id=concurrency_branch.id,
-                        pickup_datetime=pickup,
-                        return_datetime=return_dt,
-                        notes=f"Reserved via thread {thread_id}",
-                    )
-                    results.append(("SUCCESS", booking.booking_reference))
-                except BookingConflictException as e:
-                    results.append(("CONFLICT", str(e)))
-                except Exception as e:
-                    results.append(("ERROR", f"{type(e).__name__}: {str(e)}"))
+            try:
+                with schema_context(tenant_a.schema_name):
+                    try:
+                        booking = ReservationService.create_reservation(
+                            vehicle_id=target_vehicle.id,
+                            customer_data=customer_data,
+                            pickup_branch_id=concurrency_branch.id,
+                            return_branch_id=concurrency_branch.id,
+                            pickup_datetime=pickup,
+                            return_datetime=return_dt,
+                            notes=f"Reserved via thread {thread_id}",
+                        )
+                        results.append(("SUCCESS", booking.booking_reference))
+                    except BookingConflictException as e:
+                        results.append(("CONFLICT", str(e)))
+                    except Exception as e:
+                        results.append(("ERROR", f"{type(e).__name__}: {str(e)}"))
+            finally:
+                from django.db import connections
+
+                connections.close_all()
 
         # Launch concurrent threads simultaneously
         with ThreadPoolExecutor(max_workers=2) as executor:
@@ -133,3 +138,9 @@ class TestDoubleBookingConcurrency:
             bookings = Booking.objects.filter(vehicle=target_vehicle)
             assert bookings.count() == 1, "Database must strictly contain exactly 1 booking record"
             assert bookings.first().booking_reference == successes[0][1]
+
+        # Reset main connection to public for pytest-django teardown
+        from django.db import connection, connections
+
+        connections.close_all()
+        connection.set_schema_to_public()
