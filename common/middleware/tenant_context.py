@@ -2,11 +2,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TenantContextMiddleware:
     """
     Middleware executing after TenantMainMiddleware to attach tenant metadata
     to the active request context and verify tenant active status.
     """
+
     def __init__(self, get_response):
         self.get_response = get_response
 

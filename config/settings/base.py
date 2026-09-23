@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -10,7 +11,9 @@ env_file = os.path.join(BASE_DIR, ".env")
 if os.path.exists(env_file):
     environ.Env.read_env(env_file)
 
-SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-temporary-secret-key-change-in-production")
+SECRET_KEY = env(
+    "SECRET_KEY", default="django-insecure-dev-temporary-secret-key-change-in-production"
+)
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", ".platform.com"])
 
@@ -39,6 +42,7 @@ SHARED_APPS = [
     "apps.platform.plans",
     "apps.platform.themes",
     "apps.platform.platform_users",
+    "common",
 ]
 
 TENANT_APPS = [
@@ -90,14 +94,12 @@ MIDDLEWARE = [
 # DATABASE & ROUTERS
 # ==============================================================================
 
-DATABASE_ROUTERS = (
-    "django_tenants.routers.TenantSyncRouter",
-)
+DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
 
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://car_rental_user:secure_dev_password@localhost:5432/car_rental"
+        default="postgres://car_rental_user:secure_dev_password@localhost:5432/car_rental",
     )
 }
 DATABASES["default"]["ENGINE"] = "django_tenants.postgresql_backend"
@@ -110,7 +112,10 @@ AUTH_USER_MODEL = "platform_users.PlatformUser"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 10}},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -124,9 +129,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "common.pagination.StandardLimitOffsetPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": (
@@ -202,3 +205,61 @@ TEMPLATES = [
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django_tenants": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# ==============================================================================
+# CELERY BEAT SCHEDULE
+# ==============================================================================
+
+CELERY_BEAT_SCHEDULE = {
+    "check-overdue-rentals-hourly": {
+        "task": "apps.tenant.bookings.tasks.check_overdue_rentals_all_tenants",
+        "schedule": 3600.0,  # Every hour
+    },
+    "send-upcoming-pickup-reminders-15m": {
+        "task": "apps.tenant.notifications.tasks.send_pickup_reminders_all_tenants",
+        "schedule": 900.0,  # Every 15 minutes
+    },
+}
