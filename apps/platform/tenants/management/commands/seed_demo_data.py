@@ -37,10 +37,11 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
-        Domain.objects.get_or_create(
-            domain="platform.local",
-            defaults={"tenant": public_tenant, "is_primary": True, "is_verified": True},
-        )
+        for domain_name, is_primary in [("platform.local", True), ("admin.localhost", False), ("platform.localhost", False)]:
+            Domain.objects.get_or_create(
+                domain=domain_name,
+                defaults={"tenant": public_tenant, "is_primary": is_primary, "is_verified": True},
+            )
 
         # 2. Platform Superuser
         admin_user, created = PlatformUser.objects.get_or_create(
