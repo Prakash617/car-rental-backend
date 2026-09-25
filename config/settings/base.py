@@ -274,3 +274,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 900.0,  # Every 15 minutes
     },
 }
+
+# ==============================================================================
+# SECURITY HARDENING & HEADERS
+# ==============================================================================
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"

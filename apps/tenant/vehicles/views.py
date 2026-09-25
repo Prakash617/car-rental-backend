@@ -39,3 +39,27 @@ class VehicleViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             return Vehicle.objects.all()
         # Anonymous public catalog only sees non-decommissioned vehicles
         return Vehicle.objects.exclude(status=VehicleStatus.INACTIVE)
+
+    def perform_create(self, serializer):
+        vehicle = serializer.save()
+        user_email = getattr(self.request.user, "email", "staff@concierge.local")
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=user_email,
+            action="CREATE_VEHICLE",
+            resource_type="Vehicle",
+            resource_id=str(vehicle.id),
+            details={"brand": vehicle.brand, "model": vehicle.model, "plate": vehicle.license_plate},
+        )
+
+    def perform_update(self, serializer):
+        vehicle = serializer.save()
+        user_email = getattr(self.request.user, "email", "staff@concierge.local")
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=user_email,
+            action="UPDATE_VEHICLE",
+            resource_type="Vehicle",
+            resource_id=str(vehicle.id),
+            details={"status": vehicle.status, "plate": vehicle.license_plate},
+        )

@@ -26,11 +26,17 @@ from apps.tenant.websites.views import (
     PublicWebsiteConfigView,
 )
 
+from apps.platform.domains.views import TenantDomainViewSet
+
+from apps.tenant.audit.views import AuditLogViewSet
+
 router = DefaultRouter()
 router.register(r"branches", BranchViewSet, basename="branch")
 router.register(r"vehicles", VehicleViewSet, basename="vehicle")
 router.register(r"bookings", BookingViewSet, basename="booking")
 router.register(r"customers", CustomerViewSet, basename="customer")
+router.register(r"domains", TenantDomainViewSet, basename="tenant-domain")
+router.register(r"audit", AuditLogViewSet, basename="audit-log")
 router.register(r"pricing/seasonal-rates", SeasonalRateViewSet, basename="seasonal-rate")
 router.register(r"pricing/coupons", CouponViewSet, basename="coupon")
 router.register(r"pricing/addons", ExtraAddonViewSet, basename="addon")

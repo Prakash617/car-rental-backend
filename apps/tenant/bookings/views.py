@@ -158,7 +158,110 @@ class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             booking.vehicle.status = "available"
             booking.vehicle.save(update_fields=["status"])
 
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=getattr(request.user, "email", "concierge@tenant.local"),
+            action="CANCEL_BOOKING",
+            resource_type="Booking",
+            resource_id=str(booking.id),
+            details={"reference": booking.booking_reference, "reason": request.data.get("reason", "")},
+        )
+
         return self.success_response(
             data=BookingSerializer(booking).data,
             message="Booking cancelled successfully.",
+        )
+
+    @action(detail=True, methods=["post"])
+    def confirm(self, request, pk=None):
+        """
+        Staff action to confirm a pending booking.
+        """
+        booking = self.get_object()
+        if booking.status != BookingStatus.PENDING:
+            return self.error_response(
+                message=f"Cannot confirm booking with current status '{booking.status}'.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking.status = BookingStatus.CONFIRMED
+        booking.save(update_fields=["status"])
+        if booking.vehicle.status == "available":
+            booking.vehicle.status = "reserved"
+            booking.vehicle.save(update_fields=["status"])
+
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=getattr(request.user, "email", "concierge@tenant.local"),
+            action="CONFIRM_BOOKING",
+            resource_type="Booking",
+            resource_id=str(booking.id),
+            details={"reference": booking.booking_reference},
+        )
+
+        return self.success_response(
+            data=BookingSerializer(booking).data,
+            message="Reservation confirmed successfully.",
+        )
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, pk=None):
+        """
+        Staff action: customer has picked up vehicle; rental is now ACTIVE.
+        """
+        booking = self.get_object()
+        if booking.status not in [BookingStatus.CONFIRMED, BookingStatus.PENDING]:
+            return self.error_response(
+                message=f"Cannot activate booking with current status '{booking.status}'.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking.status = BookingStatus.ACTIVE
+        booking.save(update_fields=["status"])
+        booking.vehicle.status = "rented"
+        booking.vehicle.save(update_fields=["status"])
+
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=getattr(request.user, "email", "concierge@tenant.local"),
+            action="ACTIVATE_RENTAL",
+            resource_type="Booking",
+            resource_id=str(booking.id),
+            details={"reference": booking.booking_reference, "vehicle": booking.vehicle.license_plate},
+        )
+
+        return self.success_response(
+            data=BookingSerializer(booking).data,
+            message="Rental contract activated. Vehicle marked as RENTED.",
+        )
+
+    @action(detail=True, methods=["post"])
+    def complete(self, request, pk=None):
+        """
+        Staff action: customer has returned vehicle; rental is COMPLETED.
+        """
+        booking = self.get_object()
+        if booking.status != BookingStatus.ACTIVE:
+            return self.error_response(
+                message=f"Cannot complete booking that is not currently active (status: '{booking.status}').",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking.status = BookingStatus.COMPLETED
+        booking.save(update_fields=["status"])
+        booking.vehicle.status = "available"
+        booking.vehicle.save(update_fields=["status"])
+
+        from apps.tenant.audit.services import AuditService
+        AuditService.log(
+            actor_email=getattr(request.user, "email", "concierge@tenant.local"),
+            action="COMPLETE_RENTAL",
+            resource_type="Booking",
+            resource_id=str(booking.id),
+            details={"reference": booking.booking_reference, "vehicle": booking.vehicle.license_plate},
+        )
+
+        return self.success_response(
+            data=BookingSerializer(booking).data,
+            message="Rental marked as completed. Vehicle returned to fleet inventory.",
         )
