@@ -73,6 +73,16 @@ TENANT_DOMAIN_MODEL = "domains.Domain"
 PUBLIC_SCHEMA_URLCONF = "config.urls_public"
 ROOT_URLCONF = "config.urls"
 
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-forwarded-host",
+    "x-tenant-host",
+]
+
 # ==============================================================================
 # MIDDLEWARE
 # ==============================================================================
