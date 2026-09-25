@@ -16,7 +16,15 @@ from apps.tenant.pricing.views import (
 )
 from apps.tenant.reports.views import DashboardOverviewView
 from apps.tenant.vehicles.views import VehicleViewSet
-from apps.tenant.websites.views import ManageWebsiteConfigView, PublicWebsiteConfigView
+from apps.tenant.websites.views import (
+    CustomPageDetailView,
+    CustomPageListCreateView,
+    FAQListCreateView,
+    FAQManageView,
+    ManageCustomPageListView,
+    ManageWebsiteConfigView,
+    PublicWebsiteConfigView,
+)
 
 router = DefaultRouter()
 router.register(r"branches", BranchViewSet, basename="branch")
@@ -48,6 +56,13 @@ urlpatterns = [
     # Website & Themes
     path("api/v1/website/config/", PublicWebsiteConfigView.as_view(), name="website_config_public"),
     path("api/v1/dashboard/theme/", ManageWebsiteConfigView.as_view(), name="dashboard_theme"),
+    # FAQ (public GET, staff POST/PATCH/DELETE)
+    path("api/v1/website/faq/", FAQListCreateView.as_view(), name="website_faq_list"),
+    path("api/v1/dashboard/faq/<uuid:pk>/", FAQManageView.as_view(), name="dashboard_faq_manage"),
+    # Custom Pages (public GET by slug, staff write)
+    path("api/v1/website/pages/", CustomPageListCreateView.as_view(), name="website_pages_list"),
+    path("api/v1/website/pages/<slug:slug>/", CustomPageDetailView.as_view(), name="website_page_detail"),
+    path("api/v1/dashboard/pages/", ManageCustomPageListView.as_view(), name="dashboard_pages_manage"),
     # Dashboard Analytics
     path("api/v1/dashboard/overview/", DashboardOverviewView.as_view(), name="dashboard_overview"),
     # Pricing Quote

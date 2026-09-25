@@ -19,7 +19,7 @@ from apps.tenant.pricing.models import (
     SeasonalRate,
 )
 from apps.tenant.vehicles.models import Vehicle, VehicleCategory, VehicleStatus
-from apps.tenant.websites.models import ThemeChoice, WebsiteConfig
+from apps.tenant.websites.models import CustomPage, FAQ, ThemeChoice, WebsiteConfig
 
 
 class Command(BaseCommand):
@@ -121,6 +121,50 @@ class Command(BaseCommand):
                 }
             )
 
+            # Storefront FAQs
+            faqs = [
+                {"question": "What documents do I need to rent a vehicle?", "answer": "You will need a valid driver's license, a major credit card in your name, and a government-issued photo ID. International guests must also present their passport.", "order": 0},
+                {"question": "What is your fuel policy?", "answer": "Our vehicles are provided with a full tank. We ask that you return the vehicle with a full tank of fuel. If returned with less fuel, a refueling charge will apply based on current market rates plus a service fee.", "order": 1},
+                {"question": "Can I add an additional driver?", "answer": "Yes. Additional drivers can be added at the time of rental. Each additional driver must be present at pickup with a valid license and must meet our standard driver eligibility requirements.", "order": 2},
+                {"question": "What is your cancellation policy?", "answer": "Reservations cancelled 48 hours or more before pickup receive a full refund. Cancellations within 24–48 hours incur a 25% fee. Cancellations within 24 hours are non-refundable.", "order": 3},
+                {"question": "Is there a security deposit?", "answer": "A security deposit is held on your credit card at the time of pickup. The amount varies by vehicle category. Deposits are fully released within 5–7 business days after vehicle return, provided there is no damage.", "order": 4},
+                {"question": "Do you offer airport pickup?", "answer": "Yes. We offer complimentary airport delivery and collection for all premium and elite vehicle categories. Standard category vehicles can be delivered for an additional fee. Please arrange this 24 hours in advance.", "order": 5},
+                {"question": "What happens if I return the vehicle late?", "answer": "A grace period of 60 minutes is provided at no charge. After that, an additional half-day rental rate is charged for each hour beyond the grace period.", "order": 6},
+                {"question": "Are your vehicles GPS-equipped?", "answer": "All our vehicles come equipped with built-in satellite navigation systems. Additional portable GPS units are available upon request. Our fleet also supports Apple CarPlay and Android Auto.", "order": 7},
+            ]
+            for faq_data in faqs:
+                FAQ.objects.get_or_create(question=faq_data["question"], defaults=faq_data)
+
+            # Custom Pages
+            pages = [
+                {
+                    "title": "Terms & Conditions",
+                    "slug": "terms-and-conditions",
+                    "content": "# Terms & Conditions\n\n**Effective Date:** January 1, 2025\n\n## 1. Rental Agreement\nBy completing a reservation with Apex Luxury Concierge, you agree to be bound by these terms and conditions in their entirety.\n\n## 2. Driver Eligibility\nAll primary drivers must be 25 years of age or older, hold a valid full driving license for a minimum of 2 years, and present a valid credit card at the time of collection.\n\n## 3. Insurance & Liability\nOur vehicles are covered by comprehensive insurance. Our Collision Damage Waiver (CDW) reduces your financial liability in the event of an accident. Full liability remains with the renter until CDW is purchased.\n\n## 4. Damage & Condition\nVehicles must be returned in the same condition as collected. Any damage, soiling, or unusual wear will be assessed and charged accordingly.\n\n## 5. Fuel Policy\nAll vehicles are provided and must be returned with a full tank of fuel. Failure to do so will result in a refueling service charge.\n\n## 6. Prohibited Use\nVehicles may not be used for racing, off-road driving (unless specified), sub-letting, or transportation of illegal materials.\n\n## 7. Cancellation Policy\nPlease refer to our dedicated Cancellation Policy section for full details on refund timelines and applicable fees.\n\n## 8. Governing Law\nThese terms are governed by the laws of the jurisdiction in which the rental takes place.\n",
+                    "is_published": True,
+                    "seo_title": "Terms & Conditions — Apex Luxury Concierge",
+                    "seo_description": "Read the full terms and conditions for renting vehicles from Apex Luxury Concierge.",
+                },
+                {
+                    "title": "Privacy Policy",
+                    "slug": "privacy-policy",
+                    "content": "# Privacy Policy\n\n**Last Updated:** January 1, 2025\n\n## What We Collect\nWe collect personal information you provide when making a reservation, including name, email address, phone number, driver's license details, and payment information.\n\n## How We Use Your Data\nYour data is used to process reservations, communicate booking confirmations, and improve our services. We do not sell your data to third parties.\n\n## Data Security\nAll personal information is stored securely using industry-standard encryption. Payment data is handled by PCI-DSS compliant processors.\n\n## Your Rights\nYou have the right to access, correct, or request deletion of your personal data at any time. Contact us at privacy@apex-fleet.com.\n\n## Cookies\nWe use essential cookies to maintain your session and preferences. Analytics cookies help us improve the booking experience.\n",
+                    "is_published": True,
+                    "seo_title": "Privacy Policy — Apex Luxury Concierge",
+                    "seo_description": "Learn how Apex Luxury Concierge collects and protects your personal data.",
+                },
+                {
+                    "title": "About Us",
+                    "slug": "about",
+                    "content": "# About Apex Luxury Concierge\n\n## Our Story\nFounded with a singular vision — to redefine what premium vehicle rental means — Apex Luxury Concierge is the choice of discerning travellers, executives, and enthusiasts who demand the finest.\n\n## Our Fleet\nWe curate an exclusive selection of the world's most prestigious vehicles. From the commanding presence of a Range Rover Autobiography to the effortless performance of a Porsche Panamera, every car in our fleet is maintained to the highest standards.\n\n## Our Promise\n- **White-glove delivery** — your vehicle, at your location, on your schedule\n- **Concierge service** — a dedicated specialist available 24/7\n- **Zero-compromise maintenance** — every vehicle inspected before every rental\n- **Transparent pricing** — no hidden charges, no surprises\n\n## Contact Us\n📧 concierge@apex-fleet.com  \n📞 +1 (800) 555-APEX  \n🕐 Available 24 hours, 7 days a week\n",
+                    "is_published": True,
+                    "seo_title": "About Apex Luxury Concierge — Premium Vehicle Rental",
+                    "seo_description": "Learn about Apex Luxury Concierge and our commitment to premium automotive experiences.",
+                },
+            ]
+            for page_data in pages:
+                CustomPage.objects.get_or_create(slug=page_data["slug"], defaults=page_data)
+
             # Branches
             hub_branch, _ = Branch.objects.get_or_create(
                 code="HUB-DT",
@@ -183,7 +227,7 @@ class Command(BaseCommand):
                     "status": VehicleStatus.AVAILABLE,
                     "daily_rate": Decimal("750.00"),
                     "deposit_amount": Decimal("2000.00"),
-                    "images": [{"url": "https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=1200&q=80", "is_primary": True}],
+                    "images": [{"url": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80", "is_primary": True}],
                     "features": ["Executive Rear Seating with Massage", "Meridian Signature 1600W", "Adaptive Air Suspension"],
                     "description": "The quintessential luxury flagship SUV.",
                     "branch": airport_branch,

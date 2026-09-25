@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import WebsiteConfig
+from .models import FAQ, CustomPage, WebsiteConfig
 
 
 class WebsiteConfigSerializer(serializers.ModelSerializer):
@@ -27,6 +27,7 @@ class WebsiteConfigSerializer(serializers.ModelSerializer):
             "seo_meta_title",
             "seo_meta_description",
             "seo_keywords",
+            "og_image_url",
             "updated_at",
         ]
         read_only_fields = ["id", "updated_at"]
@@ -42,3 +43,35 @@ class WebsiteConfigSerializer(serializers.ModelSerializer):
     def get_timezone(self, obj):
         tenant = getattr(self.context.get("request"), "tenant", None)
         return tenant.timezone if tenant else "UTC"
+
+
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = [
+            "id",
+            "question",
+            "answer",
+            "is_active",
+            "order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CustomPageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomPage
+        fields = [
+            "id",
+            "title",
+            "slug",
+            "content",
+            "is_published",
+            "seo_title",
+            "seo_description",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]

@@ -57,6 +57,9 @@ class WebsiteConfig(models.Model):
     seo_meta_description = models.TextField("SEO Meta Description", blank=True, null=True)
     seo_keywords = models.CharField("SEO Keywords", max_length=255, blank=True, null=True)
 
+    # OG / Social image URL for rich social previews
+    og_image_url = models.URLField("OpenGraph / Social Image URL", blank=True, null=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -77,3 +80,63 @@ class WebsiteConfig(models.Model):
             }
         )
         return config
+
+
+class FAQ(models.Model):
+    """
+    Frequently asked questions displayed on the tenant's public storefront.
+    Supports ordering and is filterable by active status.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    question = models.CharField("Question", max_length=400)
+    answer = models.TextField("Answer")
+    is_active = models.BooleanField("Visible on Storefront", default=True)
+    order = models.PositiveSmallIntegerField(
+        "Display Order",
+        default=0,
+        help_text="Lower number appears first in the list.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "FAQ Item"
+        verbose_name_plural = "FAQ Items"
+        ordering = ["order", "created_at"]
+
+    def __str__(self):
+        return self.question[:80]
+
+
+class CustomPage(models.Model):
+    """
+    Simple content pages managed by the tenant (Terms, Privacy Policy, About Us, etc.).
+    Each page has a unique slug that maps to a public route on the storefront.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField("Page Title", max_length=200)
+    slug = models.SlugField(
+        "URL Slug",
+        max_length=120,
+        unique=True,
+        help_text="Used in the storefront URL: /pages/<slug>",
+    )
+    content = models.TextField(
+        "Page Content (Markdown)",
+        help_text="Supports Markdown formatting.",
+    )
+    is_published = models.BooleanField("Published", default=False)
+    seo_title = models.CharField("SEO Title Override", max_length=150, blank=True)
+    seo_description = models.TextField("SEO Description Override", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Custom Page"
+        verbose_name_plural = "Custom Pages"
+        ordering = ["title"]
+
+    def __str__(self):
+        return self.title
