@@ -50,12 +50,19 @@ class TenantProvisioningService:
                 is_active=True,
             )
 
-            # 3. Create primary Domain mapping
-            domain_name = f"{subdomain}.platform.local"
+            # 3. Create primary Domain mapping (subdomain.localhost for zero-config local access)
+            domain_name = f"{subdomain}.localhost"
             domain = Domain.objects.create(
                 domain=domain_name,
                 tenant=tenant,
                 is_primary=True,
+                is_verified=True,
+            )
+            # Also create fallback platform.local domain
+            Domain.objects.create(
+                domain=f"{subdomain}.platform.local",
+                tenant=tenant,
+                is_primary=False,
                 is_verified=True,
             )
 

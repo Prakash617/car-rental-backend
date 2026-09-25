@@ -37,7 +37,14 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
-        for domain_name, is_primary in [("platform.local", True), ("admin.localhost", False), ("platform.localhost", False)]:
+        # Bind root development domains to Public Platform Schema
+        for domain_name, is_primary in [
+            ("localhost", True),
+            ("127.0.0.1", False),
+            ("platform.localhost", False),
+            ("admin.localhost", False),
+            ("platform.local", False),
+        ]:
             Domain.objects.get_or_create(
                 domain=domain_name,
                 defaults={"tenant": public_tenant, "is_primary": is_primary, "is_verified": True},
@@ -71,12 +78,11 @@ class Command(BaseCommand):
             },
         )
 
-        # Bind local development domains to Apex tenant for immediate access
-        for domain_name, is_primary in [("localhost", True), ("127.0.0.1", False), ("apex.localhost", False)]:
-            Domain.objects.get_or_create(
-                domain=domain_name,
-                defaults={"tenant": tenant_apex, "is_primary": is_primary, "is_verified": True},
-            )
+        # Bind tenant subdomain to Apex Luxury Concierge
+        Domain.objects.get_or_create(
+            domain="apex.localhost",
+            defaults={"tenant": tenant_apex, "is_primary": True, "is_verified": True},
+        )
 
         self.stdout.write(self.style.SUCCESS(f"Provisioned tenant schema: {tenant_apex.schema_name}"))
 
