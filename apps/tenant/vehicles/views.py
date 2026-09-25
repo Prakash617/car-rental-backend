@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.permissions import AllowAny
 
-from common.permissions.tenant import IsTenantManagerOrAbove
+from common.permissions.tenant import IsTenantStaffOrAbove
 from common.responses.standard import StandardResponseMixin
 
 from .models import Vehicle, VehicleStatus
@@ -30,7 +30,7 @@ class VehicleViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
-        return [IsTenantManagerOrAbove()]
+        return [IsTenantStaffOrAbove()]
 
     def get_queryset(self):
         user = getattr(self.request, "user", None)
