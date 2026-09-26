@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 defaults={"role": RoleChoices.OWNER, "is_active": True},
             )
 
-            # Concierge Staff User
+            # Concierge Tenant Owner User
             staff_user, s_created = PlatformUser.objects.get_or_create(
                 email="concierge@apex-fleet.com",
                 defaults={
@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
             Membership.objects.get_or_create(
                 user_id=staff_user.id,
-                defaults={"role": RoleChoices.STAFF, "is_active": True},
+                defaults={"role": RoleChoices.OWNER, "is_active": True},
             )
 
             # Website Branding & Theme

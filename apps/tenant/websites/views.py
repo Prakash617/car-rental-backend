@@ -33,7 +33,7 @@ class ManageWebsiteConfigView(StandardResponseMixin, APIView):
     accent colors, hero content, SEO meta, and OG image.
     """
 
-    permission_classes = [permissions.IsAuthenticated, IsTenantOwnerOrAdmin]
+    permission_classes = [permissions.IsAuthenticated, IsTenantStaffOrAbove]
 
     @extend_schema(responses={200: WebsiteConfigSerializer})
     def get(self, request, *args, **kwargs):
