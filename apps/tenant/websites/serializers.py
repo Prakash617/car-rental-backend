@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import FAQ, CustomPage, WebsiteConfig
+from .models import FAQ, BlogPost, CustomPage, WebsiteConfig
 
 
 class WebsiteConfigSerializer(serializers.ModelSerializer):
@@ -69,9 +69,35 @@ class CustomPageSerializer(serializers.ModelSerializer):
             "slug",
             "content",
             "is_published",
+            "show_in_navbar",
+            "show_in_footer",
             "seo_title",
             "seo_description",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlogPost
+        fields = [
+            "id",
+            "title",
+            "slug",
+            "excerpt",
+            "content",
+            "cover_image",
+            "author_name",
+            "author_avatar",
+            "category",
+            "tags",
+            "read_time_minutes",
+            "is_published",
+            "views_count",
+            "published_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "views_count", "published_at", "created_at", "updated_at"]

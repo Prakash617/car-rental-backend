@@ -14,10 +14,10 @@ class Customer(models.Model):
     email = models.EmailField("Email Address", max_length=255)
     phone = models.CharField("Phone Number", max_length=30)
 
-    driver_license_number = models.CharField("Driver's License Number", max_length=50)
-    license_expiry_date = models.DateField("License Expiry Date")
-    date_of_birth = models.DateField("Date of Birth")
-    country = models.CharField("Country Code", max_length=2, default="US")
+    driver_license_number = models.CharField("Driver's License Number", max_length=50, blank=True, default="CHAUFFEUR-BOOKING")
+    license_expiry_date = models.DateField("License Expiry Date", null=True, blank=True)
+    date_of_birth = models.DateField("Date of Birth", null=True, blank=True)
+    country = models.CharField("Country Code", max_length=2, default="NP")
 
     is_verified = models.BooleanField("Identity Verified", default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -5,8 +5,13 @@ from rest_framework.views import APIView
 from common.permissions.tenant import IsTenantOwnerOrAdmin, IsTenantStaffOrAbove
 from common.responses.standard import StandardResponseMixin
 
-from .models import FAQ, CustomPage, WebsiteConfig
-from .serializers import CustomPageSerializer, FAQSerializer, WebsiteConfigSerializer
+from .models import FAQ, BlogPost, CustomPage, WebsiteConfig
+from .serializers import (
+    BlogPostSerializer,
+    CustomPageSerializer,
+    FAQSerializer,
+    WebsiteConfigSerializer,
+)
 
 
 class PublicWebsiteConfigView(StandardResponseMixin, APIView):
@@ -212,4 +217,104 @@ class ManageCustomPageListView(StandardResponseMixin, APIView):
     def get(self, request, *args, **kwargs):
         pages = CustomPage.objects.all()
         serializer = CustomPageSerializer(pages, many=True)
+        return self.success_response(data=serializer.data)
+
+
+class BlogPostListCreateView(StandardResponseMixin, APIView):
+    """
+    Public GET (published blog articles) + staff POST to create new blog post.
+    """
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated(), IsTenantStaffOrAbove()]
+
+    @extend_schema(responses={200: BlogPostSerializer(many=True)})
+    def get(self, request, *args, **kwargs):
+        category = request.query_params.get("category")
+        tag = request.query_params.get("tag")
+        search = request.query_params.get("search")
+
+        posts = BlogPost.objects.filter(is_published=True)
+
+        if category and category != "all":
+            posts = posts.filter(category__iexact=category)
+        if tag:
+            posts = posts.filter(tags__icontains=tag)
+        if search:
+            posts = posts.filter(title__icontains=search) | posts.filter(content__icontains=search)
+
+        serializer = BlogPostSerializer(posts, many=True)
+        return self.success_response(data=serializer.data)
+
+    @extend_schema(request=BlogPostSerializer, responses={201: BlogPostSerializer})
+    def post(self, request, *args, **kwargs):
+        serializer = BlogPostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return self.success_response(
+            data=serializer.data,
+            message="Blog post created successfully",
+            status_code=status.HTTP_201_CREATED,
+        )
+
+
+class BlogPostDetailView(StandardResponseMixin, APIView):
+    """
+    Public GET by slug (for reading articles) + staff PATCH/DELETE by slug.
+    """
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated(), IsTenantStaffOrAbove()]
+
+    def get_object_by_slug(self, slug):
+        try:
+            return BlogPost.objects.get(slug=slug, is_published=True)
+        except BlogPost.DoesNotExist:
+            return None
+
+    @extend_schema(responses={200: BlogPostSerializer})
+    def get(self, request, slug, *args, **kwargs):
+        post = self.get_object_by_slug(slug)
+        if not post:
+            return self.error_response("Blog post not found", status_code=status.HTTP_404_NOT_FOUND)
+        # Increment views count safely
+        BlogPost.objects.filter(pk=post.pk).update(views_count=post.views_count + 1)
+        post.refresh_from_db()
+        return self.success_response(data=BlogPostSerializer(post).data)
+
+    @extend_schema(request=BlogPostSerializer, responses={200: BlogPostSerializer})
+    def patch(self, request, slug, *args, **kwargs):
+        try:
+            post = BlogPost.objects.get(slug=slug)
+        except BlogPost.DoesNotExist:
+            return self.error_response("Blog post not found", status_code=status.HTTP_404_NOT_FOUND)
+        serializer = BlogPostSerializer(post, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return self.success_response(data=serializer.data, message="Blog post updated successfully")
+
+    def delete(self, request, slug, *args, **kwargs):
+        try:
+            post = BlogPost.objects.get(slug=slug)
+        except BlogPost.DoesNotExist:
+            return self.error_response("Blog post not found", status_code=status.HTTP_404_NOT_FOUND)
+        post.delete()
+        return self.success_response(data=None, message="Blog post deleted")
+
+
+class ManageBlogPostListView(StandardResponseMixin, APIView):
+    """
+    Staff-only: list ALL blog posts (including drafts) for dashboard content manager.
+    """
+
+    permission_classes = [permissions.IsAuthenticated, IsTenantStaffOrAbove]
+
+    @extend_schema(responses={200: BlogPostSerializer(many=True)})
+    def get(self, request, *args, **kwargs):
+        posts = BlogPost.objects.all()
+        serializer = BlogPostSerializer(posts, many=True)
         return self.success_response(data=serializer.data)

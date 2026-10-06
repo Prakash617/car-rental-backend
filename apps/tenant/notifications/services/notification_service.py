@@ -47,7 +47,7 @@ class NotificationService:
     @classmethod
     def dispatch_booking_confirmation(cls, booking: Any) -> tuple[Notification | None, bool]:
         customer = getattr(booking, "customer", None)
-        email = customer.email if customer else None
+        email = (customer.email if customer else None) or getattr(booking, "customer_email", None)
         if not email:
             logger.warning(f"Booking {booking.booking_reference} has no customer email")
             return None, False
@@ -74,17 +74,21 @@ class NotificationService:
         pickup_branch = getattr(booking, "pickup_branch", None)
         return_branch = getattr(booking, "return_branch", None)
 
+        pickup_loc = getattr(booking, "pickup_location", "") or (pickup_branch.name if pickup_branch else "Kathmandu Hub")
+        return_loc = getattr(booking, "destination_location", "") or (return_branch.name if return_branch else "Drop Location")
+        cust_name = getattr(booking, "customer_name", "") or (f"{customer.first_name} {customer.last_name}".strip() if customer else "Valued Renter")
+
         context = {
-            "customer_name": f"{customer.first_name} {customer.last_name}",
+            "customer_name": cust_name,
             "booking_reference": booking.booking_reference,
             "vehicle_name": vehicle_name,
-            "pickup_branch": pickup_branch.name if pickup_branch else "Main Branch",
-            "pickup_datetime": booking.pickup_datetime.strftime("%Y-%m-%d %H:%M UTC"),
-            "return_branch": return_branch.name if return_branch else "Main Branch",
-            "return_datetime": booking.return_datetime.strftime("%Y-%m-%d %H:%M UTC"),
-            "total_amount": f"{booking.total_price:.2f}",
-            "currency": getattr(booking, "currency", "USD"),
-            "security_deposit": f"{booking.deposit_amount:.2f}"
+            "pickup_branch": pickup_loc,
+            "pickup_datetime": booking.pickup_datetime.strftime("%Y-%m-%d %H:%M"),
+            "return_branch": return_loc,
+            "return_datetime": booking.return_datetime.strftime("%Y-%m-%d %H:%M"),
+            "total_amount": f"{float(booking.total_price):,.2f}",
+            "currency": "Rs.",
+            "security_deposit": f"{float(booking.deposit_amount):,.2f}"
             if getattr(booking, "deposit_amount", None)
             else None,
         }

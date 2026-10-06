@@ -24,12 +24,22 @@ def custom_exception_handler(exc, context):
             else:
                 error_code = "API_ERROR"
 
+        if isinstance(response.data, dict):
+            message = response.data.get("detail", str(response.data))
+            details = response.data if "detail" not in response.data else None
+        elif isinstance(response.data, list):
+            message = response.data[0] if response.data else "Validation error"
+            details = response.data
+        else:
+            message = str(response.data)
+            details = None
+
         response.data = {
             "success": False,
             "error": {
                 "code": error_code,
-                "message": response.data.get("detail", str(response.data)),
-                "details": response.data if "detail" not in response.data else None,
+                "message": message,
+                "details": details,
             },
         }
     else:

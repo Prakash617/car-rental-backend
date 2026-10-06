@@ -4,6 +4,7 @@ from django.db import models
 
 
 class ThemeChoice(models.TextChoices):
+    SAJILO = "sajilo", "Sajilo Rental Nepal"
     LUXURY = "luxury", "Luxury Concierge"
     MODERN = "modern", "Modern Mobility"
     CLASSIC = "classic", "Heritage Classic"
@@ -128,6 +129,16 @@ class CustomPage(models.Model):
         help_text="Supports Markdown formatting.",
     )
     is_published = models.BooleanField("Published", default=False)
+    show_in_navbar = models.BooleanField(
+        "Show in Navbar",
+        default=False,
+        help_text="Display this page as a link in the storefront navigation bar.",
+    )
+    show_in_footer = models.BooleanField(
+        "Show in Footer",
+        default=False,
+        help_text="Display this page as a link in the storefront footer.",
+    )
     seo_title = models.CharField("SEO Title Override", max_length=150, blank=True)
     seo_description = models.TextField("SEO Description Override", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -137,6 +148,65 @@ class CustomPage(models.Model):
         verbose_name = "Custom Page"
         verbose_name_plural = "Custom Pages"
         ordering = ["title"]
+
+    def __str__(self):
+        return self.title
+
+
+class BlogPost(models.Model):
+    """
+    Editorial blog posts and travel guides for the tenant's public storefront.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField("Post Title", max_length=250)
+    slug = models.SlugField(
+        "URL Slug",
+        max_length=150,
+        unique=True,
+        help_text="Unique URL identifier for the blog post: /blog/<slug>",
+    )
+    excerpt = models.TextField(
+        "Excerpt",
+        blank=True,
+        help_text="Short teaser summary displayed in blog listings.",
+    )
+    content = models.TextField(
+        "Post Content",
+        help_text="Full post content with formatting or markdown support.",
+    )
+    cover_image = models.URLField("Cover Image URL", blank=True, null=True)
+    author_name = models.CharField(
+        "Author Name",
+        max_length=100,
+        default="Sajilo Editorial Team",
+    )
+    author_avatar = models.URLField("Author Avatar URL", blank=True, null=True)
+    category = models.CharField(
+        "Category",
+        max_length=60,
+        default="Travel Guide",
+    )
+    tags = models.CharField(
+        "Tags",
+        max_length=200,
+        blank=True,
+        help_text="Comma-separated tags (e.g. Nepal, Road Trips, Pokhara)",
+    )
+    read_time_minutes = models.PositiveSmallIntegerField(
+        "Read Time (Minutes)",
+        default=5,
+    )
+    is_published = models.BooleanField("Published", default=True)
+    views_count = models.PositiveIntegerField("Views Count", default=0)
+    published_at = models.DateTimeField("Published At", auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Blog Post"
+        verbose_name_plural = "Blog Posts"
+        ordering = ["-published_at", "-created_at"]
 
     def __str__(self):
         return self.title

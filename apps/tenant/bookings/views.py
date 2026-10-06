@@ -77,7 +77,7 @@ class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         ).prefetch_related("addons", "addons__addon")
 
     def get_permissions(self):
-        if self.action in ["create", "lookup", "cancel"]:
+        if self.action in ["create", "lookup", "cancel", "my_bookings"]:
             return [AllowAny()]
         return [IsTenantStaffOrAbove()]
 
@@ -90,10 +90,18 @@ class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         booking = ReservationService.create_reservation(
             vehicle_id=data["vehicle_id"],
             customer_data=data["customer"],
-            pickup_branch_id=data["pickup_branch_id"],
-            return_branch_id=data["return_branch_id"],
+            pickup_branch_id=data.get("pickup_branch_id"),
+            return_branch_id=data.get("return_branch_id"),
             pickup_datetime=data["pickup_datetime"],
             return_datetime=data["return_datetime"],
+            pickup_location=data.get("pickup_location", ""),
+            destination_location=data.get("destination_location", ""),
+            stops=data.get("stops", []),
+            trip_type=data.get("trip_type", "return"),
+            decoration_name=data.get("decoration_name", ""),
+            decoration_price=data.get("decoration_price", 0),
+            distance_km=data.get("distance_km", 0),
+            advance_amount=data.get("advance_amount", 0),
             addon_ids=data.get("addon_ids"),
             coupon_code=data.get("coupon_code"),
             notes=data.get("notes"),
@@ -104,6 +112,33 @@ class BookingViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             message="Vehicle reservation initiated successfully.",
             status_code=status.HTTP_201_CREATED,
         )
+
+    @action(detail=False, methods=["get"], url_path="my-bookings")
+    def my_bookings(self, request):
+        """
+        Public lookup of customer reservations by email or phone.
+        """
+        from django.db.models import Q
+        email = request.query_params.get("email", "").strip()
+        phone = request.query_params.get("phone", "").strip()
+        if not email and not phone:
+            # If no param provided, return the most recent 10 bookings as demo/preview
+            bookings = Booking.objects.select_related(
+                "vehicle", "customer", "pickup_branch", "return_branch"
+            ).prefetch_related("addons").order_by("-created_at")[:10]
+            return self.success_response(data=BookingSerializer(bookings, many=True).data)
+
+        q = Q()
+        if email:
+            q |= Q(customer__email__iexact=email) | Q(customer_email__iexact=email)
+        if phone:
+            q |= Q(customer__phone__icontains=phone) | Q(customer_phone__icontains=phone)
+
+        bookings = Booking.objects.select_related(
+            "vehicle", "customer", "pickup_branch", "return_branch"
+        ).prefetch_related("addons").filter(q).order_by("-created_at")
+
+        return self.success_response(data=BookingSerializer(bookings, many=True).data)
 
     @extend_schema(
         parameters=[

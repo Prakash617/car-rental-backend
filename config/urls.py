@@ -15,12 +15,19 @@ from apps.tenant.pricing.views import (
     SeasonalRateViewSet,
 )
 from apps.tenant.reports.views import DashboardOverviewView
-from apps.tenant.vehicles.views import VehicleViewSet
+from apps.tenant.vehicles.views import (
+    CategoryViewSet,
+    TransmissionViewSet,
+    VehicleViewSet,
+)
 from apps.tenant.websites.views import (
+    BlogPostDetailView,
+    BlogPostListCreateView,
     CustomPageDetailView,
     CustomPageListCreateView,
     FAQListCreateView,
     FAQManageView,
+    ManageBlogPostListView,
     ManageCustomPageListView,
     ManageWebsiteConfigView,
     PublicWebsiteConfigView,
@@ -32,6 +39,8 @@ from apps.tenant.audit.views import AuditLogViewSet
 
 router = DefaultRouter()
 router.register(r"branches", BranchViewSet, basename="branch")
+router.register(r"categories", CategoryViewSet, basename="category")
+router.register(r"transmissions", TransmissionViewSet, basename="transmission")
 router.register(r"vehicles", VehicleViewSet, basename="vehicle")
 router.register(r"bookings", BookingViewSet, basename="booking")
 router.register(r"customers", CustomerViewSet, basename="customer")
@@ -69,6 +78,10 @@ urlpatterns = [
     path("api/v1/website/pages/", CustomPageListCreateView.as_view(), name="website_pages_list"),
     path("api/v1/website/pages/<slug:slug>/", CustomPageDetailView.as_view(), name="website_page_detail"),
     path("api/v1/dashboard/pages/", ManageCustomPageListView.as_view(), name="dashboard_pages_manage"),
+    # Blog (public GET list/detail by slug, staff write)
+    path("api/v1/website/blog/", BlogPostListCreateView.as_view(), name="website_blog_list"),
+    path("api/v1/website/blog/<slug:slug>/", BlogPostDetailView.as_view(), name="website_blog_detail"),
+    path("api/v1/dashboard/blog/", ManageBlogPostListView.as_view(), name="dashboard_blog_manage"),
     # Dashboard Analytics
     path("api/v1/dashboard/overview/", DashboardOverviewView.as_view(), name="dashboard_overview"),
     # Pricing Quote
@@ -82,3 +95,10 @@ urlpatterns = [
     # Core Rental API & CRUD ViewSets
     path("api/v1/", include(router.urls)),
 ]
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

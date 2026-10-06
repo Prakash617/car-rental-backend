@@ -37,11 +37,25 @@ class Booking(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.RESTRICT, related_name="bookings")
     customer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name="bookings")
     pickup_branch = models.ForeignKey(
-        Branch, on_delete=models.RESTRICT, related_name="pickup_bookings"
+        Branch, on_delete=models.RESTRICT, related_name="pickup_bookings", null=True, blank=True
     )
     return_branch = models.ForeignKey(
-        Branch, on_delete=models.RESTRICT, related_name="return_bookings"
+        Branch, on_delete=models.RESTRICT, related_name="return_bookings", null=True, blank=True
     )
+
+    # Route & Trip Type (Sajilo Rental Marketplace Model)
+    pickup_location = models.CharField("Pickup Location", max_length=120, default="Kathmandu", blank=True)
+    destination_location = models.CharField("Destination", max_length=120, default="Pokhara", blank=True)
+    stops = models.JSONField("Intermediate Stops", default=list, blank=True)
+    trip_type = models.CharField("Trip Type", max_length=30, default="one_way")  # one_way, return, tour, marriage
+    decoration_name = models.CharField("Marriage Decoration", max_length=100, blank=True, null=True)
+    decoration_price = models.DecimalField("Decoration Price", max_digits=10, decimal_places=2, default=0.00)
+    distance_km = models.DecimalField("Route Distance (km)", max_digits=8, decimal_places=2, default=0.00)
+
+    # Customer snapshot (for instant inquiries & client dashboard)
+    customer_name = models.CharField("Customer Name", max_length=120, blank=True, default="")
+    customer_phone = models.CharField("Customer Phone", max_length=50, blank=True, default="")
+    customer_email = models.EmailField("Customer Email", blank=True, default="")
 
     pickup_datetime = models.DateTimeField("Pickup Date & Time", db_index=True)
     return_datetime = models.DateTimeField("Return Date & Time", db_index=True)
@@ -59,6 +73,7 @@ class Booking(models.Model):
         "Discount Applied", max_digits=10, decimal_places=2, default=0.00
     )
     tax_amount = models.DecimalField("Tax Amount", max_digits=10, decimal_places=2, default=0.00)
+    advance_amount = models.DecimalField("Advance Payment Required", max_digits=10, decimal_places=2, default=0.00)
     deposit_amount = models.DecimalField(
         "Security Deposit Required", max_digits=10, decimal_places=2, default=0.00
     )

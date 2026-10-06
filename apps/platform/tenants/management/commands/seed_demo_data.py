@@ -41,9 +41,7 @@ class Command(BaseCommand):
         for domain_name, is_primary in [
             ("localhost", True),
             ("127.0.0.1", False),
-            ("platform.localhost", False),
             ("admin.localhost", False),
-            ("platform.local", False),
         ]:
             Domain.objects.get_or_create(
                 domain=domain_name,

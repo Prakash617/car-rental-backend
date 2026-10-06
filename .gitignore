@@ -54,3 +54,6 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+celerybeat-schedule*
+*.pid
+
